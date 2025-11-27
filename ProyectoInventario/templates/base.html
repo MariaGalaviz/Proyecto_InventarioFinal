@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-gray-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - Sistema Inventario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fuente Segoe UI */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important; }
+        
+        /* Colores Unison */
+        .bg-unison-blue { background-color: #00529e; }
+        .bg-unison-dark-blue { background-color: #015294; }
+        .bg-unison-gold { background-color: #f8bb00; }
+        
+        .text-unison-blue { color: #00529e; }
+        
+        /* Bordes de 4px */
+        .btn-unison {
+            background-color: #00529e;
+            color: white;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            transition: background-color 0.2s;
+        }
+        .btn-unison:hover { background-color: #015294; }
+
+        .btn-danger {
+            background-color: #dc2626;
+            color: white;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+        }
+
+        /* Navbar activo */
+        .nav-link { color: white; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 500; }
+        .nav-link:hover { background-color: #015294; }
+        .nav-link-active { background-color: #015294; color: #f8bb00 !important; font-weight: bold; }
+    </style>
+</head>
+<body class="h-full font-sans">
+    <div class="min-h-full">
+        <nav class="bg-unison-blue"> <!-- Color Unison -->
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 text-white font-bold text-lg">
+                            Sistema Inventario
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4">
+                                <a href="{{ url_for('inicio') }}" class="nav-link {% if active_page == 'inicio' %}nav-link-active{% endif %}">Inicio</a>
+                                <a href="{{ url_for('productos') }}" class="nav-link {% if active_page == 'productos' %}nav-link-active{% endif %}">Productos</a>
+                                <a href="{{ url_for('almacenes') }}" class="nav-link {% if active_page == 'almacenes' %}nav-link-active{% endif %}">Almacenes</a>
+                                {% if current_user.rol == 'ADMIN' %}
+                                <a href="{{ url_for('admin_panel') }}" class="nav-link {% if active_page == 'admin' %}nav-link-active{% endif %}">Admin</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-4 flex items-center md:ml-6 text-white text-sm">
+                            <span class="mr-3">{{ current_user.nombre }} ({{ current_user.rol }})</span>
+                            <a href="{{ url_for('logout') }}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-xs font-bold">Salir</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <header class="bg-white shadow">
+            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+                            <p>{{ message }}</p>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                <h1 class="text-3xl font-bold tracking-tight text-unison-blue">
+                    {% block header %}{% endblock %}
+                </h1>
+            </div>
+        </header>
+
+        <main>
+            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% block modals %}{% endblock %}
+    <script> const USER_ROLE = '{{ current_user.rol | safe }}'; </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

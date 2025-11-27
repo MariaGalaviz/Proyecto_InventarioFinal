@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block header %}Página de Inicio{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-md">
+    
+    <!-- LOGO -->
+    <img src="{{ url_for('static', filename='logo_unison.png') }}" alt="Logo Unison" class="h-32 w-auto mb-6">
+    
+    <!-- TÍTULO DE LA APLICACIÓN -->
+    <h2 class="text-2xl font-bold text-gray-800 mb-2 uppercase tracking-wide">
+        SISTEMA BÁSICO DE INVENTARIO
+    </h2>
+    
+    <!-- Nombre del autor -->
+    <p class="text-gray-600 mb-8 text-lg">Maria Ponce Galaviz</p>
+    
+    <!-- Navegación tipo Botones (Como en la Figura 2) -->
+    <div class="flex space-x-4">
+        <a href="{{ url_for('inicio') }}" class="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 font-semibold border border-gray-400">
+            Inicio
+        </a>
+        <a href="{{ url_for('productos') }}" class="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 font-semibold border border-gray-400">
+            Productos
+        </a>
+        <a href="{{ url_for('almacenes') }}" class="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 font-semibold border border-gray-400">
+            Almacenes
+        </a>
+    </div>
+    
+</div>
+{% endblock %}

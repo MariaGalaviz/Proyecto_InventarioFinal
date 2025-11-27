@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Almacenes{% endblock %}
+{% block header %}Gestión de Almacenes{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded-lg shadow-md">
+    
+    <!-- Filtros -->
+    <div class="mb-6 bg-gray-50 p-4 rounded-md border border-gray-200">
+        <h3 class="text-sm font-semibold text-unison-blue mb-3">Filtros de Búsqueda</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-500">Nombre</label>
+                <input type="text" id="filtro-nombre" onkeyup="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm" placeholder="Buscar almacén por nombre...">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500">Fecha de Creación</label>
+                <input type="date" id="filtro-fecha" onchange="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm">
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Agregar -->
+    <div class="mb-4">
+        <button id="btn-agregar-almacen" onclick="abrirModal(null)" class="hidden btn-unison text-sm font-semibold">
+            Agregar Almacén
+        </button>
+    </div>
+    
+    <!-- Tabla -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-3 px-3 text-left text-sm font-semibold text-gray-900">ID</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Fecha Creación</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white" id="tabla-almacenes"></tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Modal Agregar/Editar -->
+<div id="modal-almacen" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+        <h3 class="text-lg font-medium text-unison-blue" id="modal-titulo"></h3>
+        <form id="form-almacen" class="mt-4 space-y-4">
+            <input type="hidden" id="almacen-id" name="id">
+            <input type="text" id="almacen-nombre" name="nombre" required placeholder="Nombre del Almacén" class="border p-2 rounded w-full">
+            <div class="flex justify-end space-x-3 mt-4">
+                <button type="button" onclick="cerrarModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Cancelar</button>
+                <button type="submit" class="btn-unison">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Eliminar Personalizado -->
+<div id="modal-eliminar" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md transform transition-all text-center">
+     
+        <h3 class="text-xl font-bold text-unison-blue mb-4">Sistema de Inventario</h3>
+        
+        <p class="text-gray-600 mb-6">¿Estás seguro que deseas eliminar este almacén? Esta acción no se puede deshacer.</p>
+        
+        <input type="hidden" id="id-para-eliminar">
+        
+        <div class="flex justify-center space-x-4">
+            <button onclick="cerrarModalEliminar()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button onclick="confirmarEliminar()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-bold">
+                Sí, Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const puedeModificar = ['ADMIN', 'ALMACENES'].includes(USER_ROLE.toUpperCase());
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if(puedeModificar) document.getElementById('btn-agregar-almacen').classList.remove('hidden');
+        cargarAlmacenes();
+    });
+
+    async function cargarAlmacenes() {
+        const res = await fetch('/api/almacenes');
+        const data = await res.json();
+        const tbody = document.getElementById('tabla-almacenes');
+        tbody.innerHTML = '';
+        
+        data.forEach(a => {
+            const tr = document.createElement('tr');
+            const btns = puedeModificar ? 
+                `<button onclick='abrirModal(${JSON.stringify(a)})' class="text-unison-blue mr-2 font-bold hover:underline">Modificar</button>
+                 <button onclick="abrirModalEliminar(${a.id})" class="text-red-600 font-bold hover:underline">Eliminar</button>` : '';
+            
+            tr.innerHTML = `
+                <td class="p-3 text-sm text-gray-900">${a.id}</td>
+                <td class="p-3 text-sm font-medium text-gray-900">${a.nombre}</td>
+                <td class="p-3 text-sm text-gray-500">${a.fecha_hora_creacion || '-'}</td>
+                <td class="p-3 text-sm">${btns}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        filtrarTabla();
+    }
+
+    function filtrarTabla() {
+        const nombre = document.getElementById('filtro-nombre').value.toLowerCase();
+        const fecha = document.getElementById('filtro-fecha').value;
+        
+        const filas = document.getElementById('tabla-almacenes').getElementsByTagName('tr');
+        for(let tr of filas) {
+            const tds = tr.getElementsByTagName('td');
+            if(tds.length === 0) continue;
+            
+            const txtNombre = tds[1].textContent.toLowerCase();
+            const txtFecha = tds[2].textContent; 
+            
+            let ver = true;
+            if(nombre && !txtNombre.includes(nombre)) ver = false;
+            
+            if(fecha && !txtFecha.startsWith(fecha)) ver = false;
+
+            tr.style.display = ver ? '' : 'none';
+        }
+    }
+
+    const modal = document.getElementById('modal-almacen');
+    function abrirModal(a) {
+        document.getElementById('form-almacen').reset();
+        document.getElementById('almacen-id').value = a ? a.id : '';
+        document.getElementById('modal-titulo').textContent = a ? 'Modificar Almacén' : 'Agregar Almacén';
+        if(a) document.getElementById('almacen-nombre').value = a.nombre;
+        modal.classList.remove('hidden');
+    }
+    function cerrarModal() { modal.classList.add('hidden'); }
+    
+    // Guardar
+    document.getElementById('form-almacen').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('almacen-id').value;
+        const data = Object.fromEntries(new FormData(e.target));
+        const url = id ? `/api/almacenes/${id}` : '/api/almacenes';
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if(res.ok) { cerrarModal(); cargarAlmacenes(); }
+    });
+
+    // --- Eliminar con Modal ---
+    const modalDel = document.getElementById('modal-eliminar');
+    
+    function abrirModalEliminar(id) {
+        document.getElementById('id-para-eliminar').value = id;
+        modalDel.classList.remove('hidden');
+    }
+
+    function cerrarModalEliminar() {
+        modalDel.classList.add('hidden');
+    }
+
+    async function confirmarEliminar() {
+        const id = document.getElementById('id-para-eliminar').value;
+        await fetch(`/api/almacenes/${id}`, {method: 'DELETE'});
+        cerrarModalEliminar();
+        cargarAlmacenes();
+    }
+</script>
+{% endblock %}
