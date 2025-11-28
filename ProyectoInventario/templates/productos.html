@@ -6,21 +6,21 @@
 {% block content %}
 <div class="bg-white p-6 rounded-lg shadow-md">
     
-    <!-- Sección de Filtros Completa -->
+    <!-- Filtros de Búsqueda -->
     <div class="mb-6 bg-gray-50 p-4 rounded-md border border-gray-200">
         <h3 class="text-sm font-semibold text-unison-blue mb-3">Filtros de Búsqueda</h3>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <!-- Nombre -->
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <!-- 1. Nombre -->
             <div>
                 <label class="block text-xs font-medium text-gray-500">Nombre</label>
                 <input type="text" id="filtro-nombre" onkeyup="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm" placeholder="Buscar...">
             </div>
-            <!-- Departamento -->
+            <!-- 2. Departamento -->
             <div>
                 <label class="block text-xs font-medium text-gray-500">Departamento</label>
                 <input type="text" id="filtro-depto" onkeyup="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm" placeholder="Buscar...">
             </div>
-            <!-- Precio -->
+            <!-- 3. Precio -->
             <div>
                 <label class="block text-xs font-medium text-gray-500">Precio (Mín - Máx)</label>
                 <div class="flex space-x-1">
@@ -28,7 +28,7 @@
                     <input type="number" id="filtro-precio-max" onkeyup="filtrarTabla()" class="w-1/2 rounded border-gray-300 p-2 text-sm" placeholder="Max">
                 </div>
             </div>
-            <!-- Cantidad -->
+            <!-- 4. Cantidad  -->
             <div>
                 <label class="block text-xs font-medium text-gray-500">Cantidad (Mín - Máx)</label>
                 <div class="flex space-x-1">
@@ -36,13 +36,17 @@
                     <input type="number" id="filtro-cant-max" onkeyup="filtrarTabla()" class="w-1/2 rounded border-gray-300 p-2 text-sm" placeholder="Max">
                 </div>
             </div>
-            <!-- Almacén -->
+            <!-- 5. Almacén  -->
             <div>
                 <label class="block text-xs font-medium text-gray-500">Almacén</label>
                 <select id="filtro-almacen" onchange="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm">
                     <option value="">Todos</option>
-                    <!-- Se llena con JS -->
                 </select>
+            </div>
+            <!-- 6. Última Modificación -->
+            <div>
+                <label class="block text-xs font-medium text-gray-500">Última Modif.</label>
+                <input type="date" id="filtro-fecha-mod" onchange="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm">
             </div>
         </div>
     </div>
@@ -59,14 +63,16 @@
         <table class="min-w-full divide-y divide-gray-300">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="py-3 px-3 text-left text-sm font-semibold text-gray-900">ID</th> <!-- Col 0 -->
-                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th> <!-- Col 1 -->
-                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Precio</th> <!-- Col 2 -->
-                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Cant.</th> <!-- Col 3 -->
-                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Depto.</th> <!-- Col 4 -->
-                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Almacén</th> <!-- Col 5 -->
-                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Creado</th> <!-- Col 6 -->
-                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Acciones</th> <!-- Col 7 -->
+                    <th class="py-3 px-3 text-left text-sm font-semibold text-gray-900">ID</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Precio</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Cant.</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Depto.</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Almacén</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Creado</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Última Modif.</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Por</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white" id="tabla-productos"></tbody>
@@ -100,20 +106,12 @@
 <!-- Modal Eliminar -->
 <div id="modal-eliminar" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md transform transition-all text-center">
-       
         <h3 class="text-xl font-bold text-unison-blue mb-4">Sistema de Inventario</h3>
-        
         <p class="text-gray-600 mb-6">¿Estás seguro que deseas eliminar este producto? Esta acción no se puede deshacer.</p>
-        
         <input type="hidden" id="id-para-eliminar">
-        
         <div class="flex justify-center space-x-4">
-            <button onclick="cerrarModalEliminar()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                Cancelar
-            </button>
-            <button onclick="confirmarEliminar()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-bold">
-                Sí, Eliminar
-            </button>
+            <button onclick="cerrarModalEliminar()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancelar</button>
+            <button onclick="confirmarEliminar()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-bold">Sí, Eliminar</button>
         </div>
     </div>
 </div>
@@ -132,27 +130,19 @@
     async function cargarAlmacenes() {
         const res = await fetch('/api/almacenes');
         const data = await res.json();
-        
-        // Llenar select del modal
         const selectModal = document.getElementById('producto-almacen');
-        // Llenar select del filtro
         const selectFiltro = document.getElementById('filtro-almacen');
         
         selectModal.innerHTML = '';
-        // Preservar la opción "Todos" del filtro y limpiar el resto
         selectFiltro.innerHTML = '<option value="">Todos</option>';
 
         data.forEach(a => {
             almacenesMap.set(a.id, a.nombre);
-            
-            // Opción para modal
             let opt1 = document.createElement('option');
             opt1.value = a.id; opt1.textContent = a.nombre;
             selectModal.appendChild(opt1);
-
-            // Opción para filtro
             let opt2 = document.createElement('option');
-            opt2.value = a.nombre; // Filtramos por nombre visible en tabla
+            opt2.value = a.nombre; 
             opt2.textContent = a.nombre;
             selectFiltro.appendChild(opt2);
         });
@@ -178,22 +168,24 @@
                 <td class="p-3 text-sm text-gray-500">${p.departamento}</td>
                 <td class="p-3 text-sm text-gray-500">${almacenesMap.get(p.almacen) || 'ID: '+p.almacen}</td>
                 <td class="p-3 text-sm text-gray-400">${p.fecha_hora_creacion || '-'}</td>
+                <td class="p-3 text-sm text-gray-400">${p.fecha_modificacion || '-'}</td>
+                <td class="p-3 text-sm text-gray-400">${p.usuario_modificacion || '-'}</td>
                 <td class="p-3 text-sm">${btns}</td>
             `;
             tbody.appendChild(tr);
         });
-        filtrarTabla(); // Aplicar filtros si había algo escrito
+        filtrarTabla();
     }
 
     function filtrarTabla() {
-        // Obtener valores
         const nombre = document.getElementById('filtro-nombre').value.toLowerCase();
         const depto = document.getElementById('filtro-depto').value.toLowerCase();
         const pMin = parseFloat(document.getElementById('filtro-precio-min').value);
         const pMax = parseFloat(document.getElementById('filtro-precio-max').value);
         const cMin = parseFloat(document.getElementById('filtro-cant-min').value);
         const cMax = parseFloat(document.getElementById('filtro-cant-max').value);
-        const almacen = document.getElementById('filtro-almacen').value.toLowerCase(); // Valor del select
+        const almacen = document.getElementById('filtro-almacen').value.toLowerCase();
+        const fechaMod = document.getElementById('filtro-fecha-mod').value;
         
         const filas = document.getElementById('tabla-productos').getElementsByTagName('tr');
         
@@ -201,15 +193,14 @@
             const tds = tr.getElementsByTagName('td');
             if(tds.length === 0) continue;
             
-            // Indices según el thead: 1=Nombre, 2=Precio, 3=Cant, 4=Depto, 5=Almacen
             const txtNombre = tds[1].textContent.toLowerCase();
             const precio = parseFloat(tds[2].textContent.replace('$',''));
             const cantidad = parseFloat(tds[3].textContent);
             const txtDepto = tds[4].textContent.toLowerCase();
             const txtAlmacen = tds[5].textContent.toLowerCase();
+            const txtFechaMod = tds[7].textContent; 
             
             let ver = true;
-            
             if(nombre && !txtNombre.includes(nombre)) ver = false;
             if(depto && !txtDepto.includes(depto)) ver = false;
             if(!isNaN(pMin) && precio < pMin) ver = false;
@@ -217,12 +208,12 @@
             if(!isNaN(cMin) && cantidad < cMin) ver = false;
             if(!isNaN(cMax) && cantidad > cMax) ver = false;
             if(almacen && !txtAlmacen.includes(almacen)) ver = false;
+            if(fechaMod && !txtFechaMod.startsWith(fechaMod)) ver = false;
             
             tr.style.display = ver ? '' : 'none';
         }
     }
 
-    // --- Lógica Modales ---
     const modalProd = document.getElementById('modal-producto');
     const modalDel = document.getElementById('modal-eliminar');
 
@@ -241,14 +232,12 @@
     }
     function cerrarModalProducto() { modalProd.classList.add('hidden'); }
     
-    // Guardar
     document.getElementById('form-producto').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('producto-id').value;
         const data = Object.fromEntries(new FormData(e.target));
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/productos/${id}` : '/api/productos';
-        
         const res = await fetch(url, {
             method: method,
             headers: {'Content-Type': 'application/json'},
@@ -257,15 +246,11 @@
         if(res.ok) { cerrarModalProducto(); cargarProductos(); }
     });
 
-    // --- Eliminar con Modal ---
     function abrirModalEliminar(id) {
         document.getElementById('id-para-eliminar').value = id;
         modalDel.classList.remove('hidden');
     }
-
-    function cerrarModalEliminar() {
-        modalDel.classList.add('hidden');
-    }
+    function cerrarModalEliminar() { modalDel.classList.add('hidden'); }
 
     async function confirmarEliminar() {
         const id = document.getElementById('id-para-eliminar').value;

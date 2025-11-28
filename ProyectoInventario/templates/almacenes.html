@@ -6,17 +6,24 @@
 {% block content %}
 <div class="bg-white p-6 rounded-lg shadow-md">
     
-    <!-- Filtros -->
+    <!-- Filtros de Búsqueda -->
     <div class="mb-6 bg-gray-50 p-4 rounded-md border border-gray-200">
         <h3 class="text-sm font-semibold text-unison-blue mb-3">Filtros de Búsqueda</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- 1. Nombre -->
             <div>
                 <label class="block text-xs font-medium text-gray-500">Nombre</label>
                 <input type="text" id="filtro-nombre" onkeyup="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm" placeholder="Buscar almacén por nombre...">
             </div>
+            <!-- 2. Fecha Creación -->
             <div>
-                <label class="block text-xs font-medium text-gray-500">Fecha de Creación</label>
+                <label class="block text-xs font-medium text-gray-500">Fecha Creación</label>
                 <input type="date" id="filtro-fecha" onchange="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm">
+            </div>
+            <!-- 3. Última Modificación -->
+            <div>
+                <label class="block text-xs font-medium text-gray-500">Última Modif.</label>
+                <input type="date" id="filtro-fecha-mod" onchange="filtrarTabla()" class="w-full rounded border-gray-300 p-2 text-sm">
             </div>
         </div>
     </div>
@@ -36,6 +43,8 @@
                     <th class="py-3 px-3 text-left text-sm font-semibold text-gray-900">ID</th>
                     <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
                     <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Fecha Creación</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Última Modif.</th>
+                    <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Por</th>
                     <th class="px-3 py-3 text-left text-sm font-semibold text-gray-900">Acciones</th>
                 </tr>
             </thead>
@@ -61,23 +70,15 @@
     </div>
 </div>
 
-<!-- Modal Eliminar Personalizado -->
+<!-- Modal Eliminar -->
 <div id="modal-eliminar" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md transform transition-all text-center">
-     
         <h3 class="text-xl font-bold text-unison-blue mb-4">Sistema de Inventario</h3>
-        
         <p class="text-gray-600 mb-6">¿Estás seguro que deseas eliminar este almacén? Esta acción no se puede deshacer.</p>
-        
         <input type="hidden" id="id-para-eliminar">
-        
         <div class="flex justify-center space-x-4">
-            <button onclick="cerrarModalEliminar()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                Cancelar
-            </button>
-            <button onclick="confirmarEliminar()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-bold">
-                Sí, Eliminar
-            </button>
+            <button onclick="cerrarModalEliminar()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">Cancelar</button>
+            <button onclick="confirmarEliminar()" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-bold">Sí, Eliminar</button>
         </div>
     </div>
 </div>
@@ -107,7 +108,9 @@
             tr.innerHTML = `
                 <td class="p-3 text-sm text-gray-900">${a.id}</td>
                 <td class="p-3 text-sm font-medium text-gray-900">${a.nombre}</td>
-                <td class="p-3 text-sm text-gray-500">${a.fecha_hora_creacion || '-'}</td>
+                <td class="p-3 text-sm text-gray-400">${a.fecha_hora_creacion || '-'}</td>
+                <td class="p-3 text-sm text-gray-400">${a.fecha_modificacion || '-'}</td>
+                <td class="p-3 text-sm text-gray-400">${a.usuario_modificacion || '-'}</td>
                 <td class="p-3 text-sm">${btns}</td>
             `;
             tbody.appendChild(tr);
@@ -117,7 +120,8 @@
 
     function filtrarTabla() {
         const nombre = document.getElementById('filtro-nombre').value.toLowerCase();
-        const fecha = document.getElementById('filtro-fecha').value;
+        const fecha = document.getElementById('filtro-fecha').value; 
+        const fechaMod = document.getElementById('filtro-fecha-mod').value; 
         
         const filas = document.getElementById('tabla-almacenes').getElementsByTagName('tr');
         for(let tr of filas) {
@@ -126,17 +130,20 @@
             
             const txtNombre = tds[1].textContent.toLowerCase();
             const txtFecha = tds[2].textContent; 
+            const txtFechaMod = tds[3].textContent; 
             
             let ver = true;
             if(nombre && !txtNombre.includes(nombre)) ver = false;
-            
             if(fecha && !txtFecha.startsWith(fecha)) ver = false;
+            if(fechaMod && !txtFechaMod.startsWith(fechaMod)) ver = false;
 
             tr.style.display = ver ? '' : 'none';
         }
     }
 
     const modal = document.getElementById('modal-almacen');
+    const modalDel = document.getElementById('modal-eliminar');
+
     function abrirModal(a) {
         document.getElementById('form-almacen').reset();
         document.getElementById('almacen-id').value = a ? a.id : '';
@@ -146,14 +153,12 @@
     }
     function cerrarModal() { modal.classList.add('hidden'); }
     
-    // Guardar
     document.getElementById('form-almacen').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('almacen-id').value;
         const data = Object.fromEntries(new FormData(e.target));
         const url = id ? `/api/almacenes/${id}` : '/api/almacenes';
         const method = id ? 'PUT' : 'POST';
-        
         const res = await fetch(url, {
             method: method,
             headers: {'Content-Type': 'application/json'},
@@ -162,17 +167,11 @@
         if(res.ok) { cerrarModal(); cargarAlmacenes(); }
     });
 
-    // --- Eliminar con Modal ---
-    const modalDel = document.getElementById('modal-eliminar');
-    
     function abrirModalEliminar(id) {
         document.getElementById('id-para-eliminar').value = id;
         modalDel.classList.remove('hidden');
     }
-
-    function cerrarModalEliminar() {
-        modalDel.classList.add('hidden');
-    }
+    function cerrarModalEliminar() { modalDel.classList.add('hidden'); }
 
     async function confirmarEliminar() {
         const id = document.getElementById('id-para-eliminar').value;
